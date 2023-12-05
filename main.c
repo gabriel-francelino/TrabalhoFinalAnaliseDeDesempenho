@@ -231,12 +231,19 @@ int main() {
             // Evento: chegada de um usuario
             // atualiza métricas, calculo little, geraçao de tempo...
 
+            // criar conexao
+            //      |_alocar 
+            //      |_gerar tempo duração
+            // gerar tempo da proxima conexao
+
             // nos dois primeiros minutos só tem chegada
             // no fim de 2 min tem que ter uma taxa de x = 7978,7234... ativas
-        } else if (tempo_decorrido == tempo_saida)
+        }else if (tempo_decorrido == tempo_saida)
         {
             // saida do usuario
             // atualiza metricas
+
+            // usar arvore min heap para armazenar o minimo na raiz(usar ralocação dinamica)
         }else if (tempo_decorrido == tempo_coleta)
         {
             // coleta de dados para calculo de little
