@@ -42,6 +42,15 @@ typedef struct {
     double soma_areas;
 } little;
 
+
+typedef struct
+{
+    double tempo_duracao;
+    double tempo_chegada_pacote;
+    // outras coisas que nao sabemos ainda...
+} conexao;
+
+
 // definir ocupações ------------------------------------------------------------------------------------------------------------
 // Taxas de Chegada para Ocupações
 typedef struct {
@@ -198,7 +207,10 @@ int main() {
     parametros params;
     define_parametros(&params, cenario, ocupacoes);
 
-    // double tempo_decorrido = 0.0;
+    double intervalo_conexao = 1.0 / params.media_chegada;
+    double tempo_decorrido = 0.0;
+    double nova_conexao = gerar_tempo(intervalo_conexao);
+
     // double tempo_chegada = gerar_tempo(params.media_chegada);
     // double tempo_saida = DBL_MAX;
     // unsigned long int fila = 0;
@@ -207,13 +219,13 @@ int main() {
     // // Variáveis de Medidas de Interesse
     // double soma_ocupacao = 0.0;
 
-    // // Little
-    // little e_n;         // E[N]
-    // little e_w_chegada; // E[W] Chegada
-    // little e_w_saida;   // E[W] Saída
-    // inicia_little(&e_n);
-    // inicia_little(&e_w_chegada); 
-    // inicia_little(&e_w_saida);
+    // Little
+    little e_n;         // E[N]
+    little e_w_chegada; // E[W] Chegada
+    little e_w_saida;   // E[W] Saída
+    inicia_little(&e_n);
+    inicia_little(&e_w_chegada); 
+    inicia_little(&e_w_saida);
 
     // // Erros de Little a cada 10 segundos
     // double tempo_coleta = INTERVALO_COLETA;
@@ -221,124 +233,44 @@ int main() {
     // int n_erros = (int)(params.tempo_simulacao / INTERVALO_COLETA);
     // double erros_little[n_erros];
 
-    // while (tempo_decorrido < params.tempo_simulacao)
-    // {
-    //     // determina o proximo evento
-    //     double tempo_proximo_evento = min(tempo_chegada, tempo_saida);
-    //     tempo_proximo_evento = min(tempo_proximo_evento, tempo_coleta);
+    while (tempo_decorrido < params.tempo_simulacao)
+    {
+        // double chegada_pacote = raiz_min_heap.tempo_chegada_pacote
 
-    //     // avança o tempo para o proximo evento
-    //     tempo_decorrido = tempo_proximo_evento;
+        // determina o proximo evento
+        // tempo_decorrido = min(nova_conexao, min(tempo_coleta, chegada_pacote))
 
-    //     if (tempo_decorrido == tempo_chegada)
-    //     {
-    //         // Evento: chegada de um usuario
-    //         // atualiza métricas, calculo little, geraçao de tempo...
+        if (tempo_decorrido == nova_conexao)
+        {
+            // Evento: chegada de um usuario
+            // atualiza métricas, calculo little, geraçao de tempo...
 
-    //         // criar conexao
-    //         //      |_alocar 
-    //         //      |_gerar tempo duração
-    //         // gerar tempo da proxima conexao
+            // criar conexao
+            //      |_alocar 
+            //      |_gerar tempo duração
+            // gerar tempo da proxima conexao
 
-    //         // nos dois primeiros minutos só tem chegada
-    //         // no fim de 2 min tem que ter uma taxa de x = 7978,7234... ativas
-    //     }else if (tempo_decorrido == tempo_saida)
-    //     {
-    //         // saida do usuario
-    //         // atualiza metricas
+            // nos dois primeiros minutos só tem chegada
+            // no fim de 2 min tem que ter uma taxa de x = 7978,7234... ativas
+        }else if (tempo_decorrido == chegada_pacote)
+        {
+            // saida do usuario
+            // atualiza metricas
 
-    //         // usar arvore min heap para armazenar o minimo na raiz(usar ralocação dinamica)
-    //     }else if (tempo_decorrido == tempo_coleta)
-    //     {
-    //         // coleta de dados para calculo de little
-    //         // atualiza metricas
+            // usar arvore min heap para armazenar o minimo na raiz(usar ralocação dinamica)
+        }else if (tempo_decorrido == tempo_coleta)
+        {
+            // coleta de dados para calculo de little
+            // atualiza metricas
 
-    //         // avança no temoi de coleta para o proximo intervalo
-    //         tempo_coleta += INTERVALO_COLETA;
-    //     } else {
-    //         // evento inválido
-    //         printf("Evento inválido!\n");
-    //         break;
-    //     }
-        
-        
-        
-    // }
-    
-
-    // while(tempo_decorrido < params.tempo_simulacao) {
-    //     tempo_decorrido = min(tempo_coleta, min(tempo_chegada, tempo_saida));
-    //     // printf("%lF\n", tempo_decorrido);
-
-    //     if(tempo_decorrido == tempo_chegada) {
-    //         // * Chegada
-    //         if(!fila){
-    //             double tempo_servico = gerar_tempo(params.media_servico);
-    //             tempo_saida = tempo_decorrido + tempo_servico;
-    //             soma_ocupacao += tempo_servico;
-    //         }
-    //         fila++;
-    //         max_fila = max_fila > fila ? max_fila : fila;
-    //         tempo_chegada = tempo_decorrido + gerar_tempo(params.media_chegada);
-
-    //         // Cálculo Little -> E[N]
-    //         e_n.soma_areas += (tempo_decorrido - e_n.tempo_anterior) * e_n.no_eventos;
-    //         e_n.no_eventos++;
-    //         e_n.tempo_anterior = tempo_decorrido;
-
-    //         // Cálculo Little -> E[W] Chegada
-    //         e_w_chegada.soma_areas += (tempo_decorrido - e_w_chegada.tempo_anterior) * e_w_chegada.no_eventos;
-    //         e_w_chegada.no_eventos++;
-    //         e_w_chegada.tempo_anterior = tempo_decorrido;
-
-    //     } else if(tempo_decorrido == tempo_saida) {
-    //         // * Saída
-    //         fila--;
-    //         if(fila) {
-    //             double tempo_servico = gerar_tempo(params.media_servico);
-    //             tempo_saida = tempo_decorrido + tempo_servico;
-    //             soma_ocupacao += tempo_servico;
-    //         } else {
-    //             tempo_saida = DBL_MAX;
-    //         }
-
-    //         // Cálculo Little -> E[N]
-    //         e_n.soma_areas += (tempo_decorrido - e_n.tempo_anterior) * e_n.no_eventos;
-    //         e_n.no_eventos--;
-    //         e_n.tempo_anterior = tempo_decorrido;
-
-    //         // Cálculo Little -> E[W] Saída
-    //         e_w_saida.soma_areas += (tempo_decorrido - e_w_saida.tempo_anterior) * e_w_saida.no_eventos;
-    //         e_w_saida.no_eventos++;
-    //         e_w_saida.tempo_anterior = tempo_decorrido;
-
-    //     } else if (tempo_decorrido == tempo_coleta){
-    //         // Cálculo do Erro de Little
-
-    //         e_n.soma_areas += (tempo_decorrido - e_n.tempo_anterior) * e_n.no_eventos;
-    //         e_w_chegada.soma_areas += (tempo_decorrido - e_w_chegada.tempo_anterior) * e_w_chegada.no_eventos;
-    //         e_w_saida.soma_areas += (tempo_decorrido - e_w_saida.tempo_anterior) * e_w_saida.no_eventos;
-    //         e_n.tempo_anterior = tempo_decorrido;
-    //         e_w_chegada.tempo_anterior = tempo_decorrido;
-    //         e_w_saida.tempo_anterior = tempo_decorrido;
-
-    //         double e_n_calculo = e_n.soma_areas / tempo_decorrido;
-    //         double e_w_calculo = (e_w_chegada.soma_areas - e_w_saida.soma_areas) / e_w_chegada.no_eventos;
-    //         double lambda = e_w_chegada.no_eventos / tempo_decorrido;
-    //         double erro_little = e_n_calculo - (lambda * e_w_calculo);
-    //         if(erro_little < 0) {
-    //             erro_little = (-1.0)*erro_little;
-    //         }           
-    //         erros_little[indice_erro] = erro_little;
-
-    //         // printf("Erro calculado em %d segundos: %.20lF\n", tempo_intervalo, erros_little[indice_erro]);
-    //         tempo_coleta += INTERVALO_COLETA;
-    //         indice_erro++;
-    //     } else {
-    //         puts("Evento Inválido!\n");
-    //         return (1);
-    //     }
-    // }
+            // avança no temoi de coleta para o proximo intervalo
+            tempo_coleta += INTERVALO_COLETA;
+        } else {
+            // evento inválido
+            printf("Evento inválido!\n");
+            break;
+        }        
+    }
 
 
     // e_w_chegada.soma_areas += (tempo_decorrido - e_w_chegada.tempo_anterior) * e_w_chegada.no_eventos;
