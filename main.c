@@ -1,5 +1,5 @@
 /*
-    Proposta do Trabalho: 
+    Proposta do Trabalho: // ATUALIZAR DEFINIÇÃO
         Tempo de Simulação = 864.000 = 10 dias
         4 cenários - 
             Ocupação Aprox 60%;
@@ -35,17 +35,58 @@ typedef struct {
     double media_servico;
     double tempo_simulacao;
 } parametros;
+
 typedef struct {
     unsigned long int no_eventos;
     double tempo_anterior;
     double soma_areas;
 } little;
 
+// definir ocupações
+// Taxas de Chegada para Ocupações
+typedef struct {
+   double taxa60;
+   double taxa80;
+   double taxa90;
+   double taxa99;
+} ocupacoes;
+
+// Calcula a taxa de chegada de acordo com a ocupação passada
+double calcular_taxa(double ocupacao) {
+   double bytesPorPessoaPorSegundo = 9400;
+   double bitsPorPessoaPorSegundo = bytesPorPessoaPorSegundo * 8;
+   double gigabitsPorPessoaPorSegundo = bitsPorPessoaPorSegundo / 1000000000;
+   double nPessoas = ocupacao / gigabitsPorPessoaPorSegundo;
+   double nPessoasPorSegundo = (nPessoas / 2) / 60;
+
+   return nPessoasPorSegundo;
+}
+
+// Define a taxa de chegada para as 4 ocupações
+void definir_ocupacoes(ocupacoes *ocupacoes) {
+   // Para 60% de ocupação, 600Mbps em 1Gbps
+   ocupacoes->taxa60 = calcular_taxa(0.6);
+   printf("Taxa de Chegada para 0.60: %.20f pessoas por segundo\n", ocupacoes->taxa60);
+
+   // Para 80% de ocupação, 800Mbps em 1Gbps
+   ocupacoes->taxa80 = calcular_taxa(0.8);
+   printf("Taxa de Chegada para 0.80: %.20f pessoas por segundo\n", ocupacoes->taxa80);
+
+   // Para 90% de ocupação, 900Mbps em 1Gbps
+   ocupacoes->taxa90 = calcular_taxa(0.9);
+   printf("Taxa de Chegada para 0.90: %.20f pessoas por segundo\n", ocupacoes->taxa90);
+
+   // Para 99% de ocupação, 999Mbps em 1Gbps
+   ocupacoes->taxa99 = calcular_taxa(0.99);
+   printf("Taxa de Chegada para 0.99: %.20f pessoas por segundo\n", ocupacoes->taxa99);
+}
+
 void inicia_little(little *l) {
     l->no_eventos = 0;
     l->tempo_anterior = 0.0;
     l->soma_areas = 0.0;
 }
+
 void define_parametros(parametros *params, int cenario){
     printf("\n");
     switch (cenario) {
@@ -89,15 +130,18 @@ void define_parametros(parametros *params, int cenario){
     puts("\n-> Tempo a ser simulado (s): 864.000");
     params->tempo_simulacao = 864000;
 }
+
 double uniforme() {
     double u = rand() / ((double) RAND_MAX + 1);
     u = 1.0 - u;
     return u;
 }
+
 double min(double d1, double d2) {
     if(d1 < d2) return d1;
     return d2;
 }
+
 double gerar_tempo(double media) {
     return (-1.0/media) * log(uniforme());
 }
@@ -117,6 +161,7 @@ void resultado_csv(int cenario, double ocupacao_objetivo, double ocupacao_simula
     
     fclose(arquivo);
 }
+
 void erro_csv(int cenario, int n_erros, double erros_little[n_erros]) {
     // Cria um arquivo para os erros do cenário
     char nome_arquivo[20];
@@ -172,79 +217,117 @@ int main() {
     int n_erros = (int)(params.tempo_simulacao / INTERVALO_COLETA);
     double erros_little[n_erros];
 
-    while(tempo_decorrido < params.tempo_simulacao) {
-        tempo_decorrido = min(tempo_coleta, min(tempo_chegada, tempo_saida));
-        // printf("%lF\n", tempo_decorrido);
+    while (tempo_decorrido < params.tempo_simulacao)
+    {
+        // determina o proximo evento
+        double tempo_proximo_evento = min(tempo_chegada, tempo_saida);
+        tempo_proximo_evento = min(tempo_proximo_evento, tempo_coleta);
 
-        if(tempo_decorrido == tempo_chegada) {
-            // * Chegada
-            if(!fila){
-                double tempo_servico = gerar_tempo(params.media_servico);
-                tempo_saida = tempo_decorrido + tempo_servico;
-                soma_ocupacao += tempo_servico;
-            }
-            fila++;
-            max_fila = max_fila > fila ? max_fila : fila;
-            tempo_chegada = tempo_decorrido + gerar_tempo(params.media_chegada);
+        // avança o tempo para o proximo evento
+        tempo_decorrido = tempo_proximo_evento;
 
-            // Cálculo Little -> E[N]
-            e_n.soma_areas += (tempo_decorrido - e_n.tempo_anterior) * e_n.no_eventos;
-            e_n.no_eventos++;
-            e_n.tempo_anterior = tempo_decorrido;
+        if (tempo_decorrido == tempo_chegada)
+        {
+            // Evento: chegada de um usuario
+            // atualiza métricas, calculo little, geraçao de tempo...
 
-            // Cálculo Little -> E[W] Chegada
-            e_w_chegada.soma_areas += (tempo_decorrido - e_w_chegada.tempo_anterior) * e_w_chegada.no_eventos;
-            e_w_chegada.no_eventos++;
-            e_w_chegada.tempo_anterior = tempo_decorrido;
+            // nos dois primeiros minutos só tem chegada
+            // no fim de 2 min tem que ter uma taxa de x = 7978,7234... ativas
+        } else if (tempo_decorrido == tempo_saida)
+        {
+            // saida do usuario
+            // atualiza metricas
+        }else if (tempo_decorrido == tempo_coleta)
+        {
+            // coleta de dados para calculo de little
+            // atualiza metricas
 
-        } else if(tempo_decorrido == tempo_saida) {
-            // * Saída
-            fila--;
-            if(fila) {
-                double tempo_servico = gerar_tempo(params.media_servico);
-                tempo_saida = tempo_decorrido + tempo_servico;
-                soma_ocupacao += tempo_servico;
-            } else {
-                tempo_saida = DBL_MAX;
-            }
-
-            // Cálculo Little -> E[N]
-            e_n.soma_areas += (tempo_decorrido - e_n.tempo_anterior) * e_n.no_eventos;
-            e_n.no_eventos--;
-            e_n.tempo_anterior = tempo_decorrido;
-
-            // Cálculo Little -> E[W] Saída
-            e_w_saida.soma_areas += (tempo_decorrido - e_w_saida.tempo_anterior) * e_w_saida.no_eventos;
-            e_w_saida.no_eventos++;
-            e_w_saida.tempo_anterior = tempo_decorrido;
-
-        } else if (tempo_decorrido == tempo_coleta){
-            // Cálculo do Erro de Little
-
-            e_n.soma_areas += (tempo_decorrido - e_n.tempo_anterior) * e_n.no_eventos;
-            e_w_chegada.soma_areas += (tempo_decorrido - e_w_chegada.tempo_anterior) * e_w_chegada.no_eventos;
-            e_w_saida.soma_areas += (tempo_decorrido - e_w_saida.tempo_anterior) * e_w_saida.no_eventos;
-            e_n.tempo_anterior = tempo_decorrido;
-            e_w_chegada.tempo_anterior = tempo_decorrido;
-            e_w_saida.tempo_anterior = tempo_decorrido;
-
-            double e_n_calculo = e_n.soma_areas / tempo_decorrido;
-            double e_w_calculo = (e_w_chegada.soma_areas - e_w_saida.soma_areas) / e_w_chegada.no_eventos;
-            double lambda = e_w_chegada.no_eventos / tempo_decorrido;
-            double erro_little = e_n_calculo - (lambda * e_w_calculo);
-            if(erro_little < 0) {
-                erro_little = (-1.0)*erro_little;
-            }           
-            erros_little[indice_erro] = erro_little;
-
-            // printf("Erro calculado em %d segundos: %.20lF\n", tempo_intervalo, erros_little[indice_erro]);
+            // avança no temoi de coleta para o proximo intervalo
             tempo_coleta += INTERVALO_COLETA;
-            indice_erro++;
         } else {
-            puts("Evento Inválido!\n");
-            return (1);
+            // evento inválido
+            printf("Evento inválido!\n");
+            break;
         }
+        
+        
+        
     }
+    
+
+    // while(tempo_decorrido < params.tempo_simulacao) {
+    //     tempo_decorrido = min(tempo_coleta, min(tempo_chegada, tempo_saida));
+    //     // printf("%lF\n", tempo_decorrido);
+
+    //     if(tempo_decorrido == tempo_chegada) {
+    //         // * Chegada
+    //         if(!fila){
+    //             double tempo_servico = gerar_tempo(params.media_servico);
+    //             tempo_saida = tempo_decorrido + tempo_servico;
+    //             soma_ocupacao += tempo_servico;
+    //         }
+    //         fila++;
+    //         max_fila = max_fila > fila ? max_fila : fila;
+    //         tempo_chegada = tempo_decorrido + gerar_tempo(params.media_chegada);
+
+    //         // Cálculo Little -> E[N]
+    //         e_n.soma_areas += (tempo_decorrido - e_n.tempo_anterior) * e_n.no_eventos;
+    //         e_n.no_eventos++;
+    //         e_n.tempo_anterior = tempo_decorrido;
+
+    //         // Cálculo Little -> E[W] Chegada
+    //         e_w_chegada.soma_areas += (tempo_decorrido - e_w_chegada.tempo_anterior) * e_w_chegada.no_eventos;
+    //         e_w_chegada.no_eventos++;
+    //         e_w_chegada.tempo_anterior = tempo_decorrido;
+
+    //     } else if(tempo_decorrido == tempo_saida) {
+    //         // * Saída
+    //         fila--;
+    //         if(fila) {
+    //             double tempo_servico = gerar_tempo(params.media_servico);
+    //             tempo_saida = tempo_decorrido + tempo_servico;
+    //             soma_ocupacao += tempo_servico;
+    //         } else {
+    //             tempo_saida = DBL_MAX;
+    //         }
+
+    //         // Cálculo Little -> E[N]
+    //         e_n.soma_areas += (tempo_decorrido - e_n.tempo_anterior) * e_n.no_eventos;
+    //         e_n.no_eventos--;
+    //         e_n.tempo_anterior = tempo_decorrido;
+
+    //         // Cálculo Little -> E[W] Saída
+    //         e_w_saida.soma_areas += (tempo_decorrido - e_w_saida.tempo_anterior) * e_w_saida.no_eventos;
+    //         e_w_saida.no_eventos++;
+    //         e_w_saida.tempo_anterior = tempo_decorrido;
+
+    //     } else if (tempo_decorrido == tempo_coleta){
+    //         // Cálculo do Erro de Little
+
+    //         e_n.soma_areas += (tempo_decorrido - e_n.tempo_anterior) * e_n.no_eventos;
+    //         e_w_chegada.soma_areas += (tempo_decorrido - e_w_chegada.tempo_anterior) * e_w_chegada.no_eventos;
+    //         e_w_saida.soma_areas += (tempo_decorrido - e_w_saida.tempo_anterior) * e_w_saida.no_eventos;
+    //         e_n.tempo_anterior = tempo_decorrido;
+    //         e_w_chegada.tempo_anterior = tempo_decorrido;
+    //         e_w_saida.tempo_anterior = tempo_decorrido;
+
+    //         double e_n_calculo = e_n.soma_areas / tempo_decorrido;
+    //         double e_w_calculo = (e_w_chegada.soma_areas - e_w_saida.soma_areas) / e_w_chegada.no_eventos;
+    //         double lambda = e_w_chegada.no_eventos / tempo_decorrido;
+    //         double erro_little = e_n_calculo - (lambda * e_w_calculo);
+    //         if(erro_little < 0) {
+    //             erro_little = (-1.0)*erro_little;
+    //         }           
+    //         erros_little[indice_erro] = erro_little;
+
+    //         // printf("Erro calculado em %d segundos: %.20lF\n", tempo_intervalo, erros_little[indice_erro]);
+    //         tempo_coleta += INTERVALO_COLETA;
+    //         indice_erro++;
+    //     } else {
+    //         puts("Evento Inválido!\n");
+    //         return (1);
+    //     }
+    // }
     e_w_chegada.soma_areas += (tempo_decorrido - e_w_chegada.tempo_anterior) * e_w_chegada.no_eventos;
     e_w_saida.soma_areas += (tempo_decorrido - e_w_saida.tempo_anterior) * e_w_saida.no_eventos;
 
