@@ -252,18 +252,19 @@ int main() {
 
     while (tempo_decorrido < params.tempo_simulacao) {
         
-        double chegada_pacote = meuHeap.estaVazio() ? DBL_MAX : meuHeap.mostrarMenorConexao().tempo_chegada_pacote;
+        Conexao conexao_chegada_pacote = meuHeap.mostrarMenorConexao();
+        double saida_pacote;
 
         // determina o proximo evento
-        tempo_decorrido = min(nova_conexao, min(tempo_coleta, chegada_pacote));
+        tempo_decorrido = min(nova_conexao, min(tempo_coleta, conexao_chegada_pacote.tempo_chegada_pacote));
 
         if (tempo_decorrido == nova_conexao) {
             // Obs: nos dois primeiros minutos só tem chegada
             // no fim de 2 min tem que ter uma taxa de x = 7978,7234... ativas
 
             double tempo_duracao = gerar_tempo(params.media_servico);
-            double tempo_chegada_pacote =  nova_conexao; // nao sabemos se é isso mesmo
-            Conexao conexao = {tempo_duracao, tempo_chegada_pacote};
+            double tempo_conexao_chegada_pacote =  nova_conexao; // nao sabemos se é isso mesmo
+            Conexao conexao = {tempo_duracao, tempo_conexao_chegada_pacote};
             meuHeap.adicionarConexao(conexao);
             nova_conexao = tempo_decorrido + gerar_tempo(params.media_chegada);
 
@@ -277,7 +278,7 @@ int main() {
             e_w_chegada.no_eventos++;
             e_w_chegada.tempo_anterior = tempo_decorrido;
 
-        } else if (tempo_decorrido == chegada_pacote) {
+        } else if (tempo_decorrido == conexao_chegada_pacote.tempo_chegada_pacote) {
 
             // * Evento: Chegada de um pacote de uma das ligações ativas
             // ? O que precisa ser feito: 
@@ -287,7 +288,10 @@ int main() {
             // usar arvore min heap para armazenar o minimo na raiz(usar ralocação dinamica)
 
 
-        } else if (tempo_decorrido == tempo_coleta) {
+        } else if (tempo_decorrido == saida_pacote)
+        {
+            /* code */
+        }else if (tempo_decorrido == tempo_coleta) {
 
             // * Evento: Coletar o erro de little - coleta a cada 10 segundos
             // ? O que precisa ser feito: 
