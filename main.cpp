@@ -249,11 +249,11 @@ int main() {
 
     // ------------------------------------
     MinHeap meuHeap;
+    double saida_pacote = DBL_MAX;
 
     while (tempo_decorrido < params.tempo_simulacao) {
         
         Conexao conexao_chegada_pacote = meuHeap.mostrarMenorConexao();
-        double saida_pacote;
 
         // determina o proximo evento
         tempo_decorrido = min(nova_conexao, min(tempo_coleta, conexao_chegada_pacote.tempo_chegada_pacote));
@@ -268,15 +268,15 @@ int main() {
             meuHeap.adicionarConexao(conexao);
             nova_conexao = tempo_decorrido + gerar_tempo(params.media_chegada);
 
-            // Cálculo Little -> E[N]
-            e_n.soma_areas += (tempo_decorrido - e_n.tempo_anterior) * e_n.no_eventos;
-            e_n.no_eventos++;
-            e_n.tempo_anterior = tempo_decorrido;
+            // // Cálculo Little -> E[N]
+            // e_n.soma_areas += (tempo_decorrido - e_n.tempo_anterior) * e_n.no_eventos;
+            // e_n.no_eventos++;
+            // e_n.tempo_anterior = tempo_decorrido;
 
-            // Cálculo Little -> E[W] Chegada
-            e_w_chegada.soma_areas += (tempo_decorrido - e_w_chegada.tempo_anterior) * e_w_chegada.no_eventos;
-            e_w_chegada.no_eventos++;
-            e_w_chegada.tempo_anterior = tempo_decorrido;
+            // // Cálculo Little -> E[W] Chegada
+            // e_w_chegada.soma_areas += (tempo_decorrido - e_w_chegada.tempo_anterior) * e_w_chegada.no_eventos;
+            // e_w_chegada.no_eventos++;
+            // e_w_chegada.tempo_anterior = tempo_decorrido;
 
         } else if (tempo_decorrido == conexao_chegada_pacote.tempo_chegada_pacote) {
 
@@ -286,6 +286,13 @@ int main() {
             // saida do usuario
             // atualiza metricas
             // usar arvore min heap para armazenar o minimo na raiz(usar ralocação dinamica)
+            conexao_chegada_pacote.tempo_chegada_pacote += 0.002;
+
+            if (conexao_chegada_pacote.tempo_duracao < conexao_chegada_pacote.tempo_chegada_pacote)
+            {
+                /* code */
+            }
+            
 
 
         } else if (tempo_decorrido == saida_pacote)
