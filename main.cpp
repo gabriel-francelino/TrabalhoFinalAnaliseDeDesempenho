@@ -47,11 +47,11 @@
 #include <time.h>
 #include "min_heap.h"
 
-
 // --------------------------------------------------------------------------
 
 #define INTERVALO_COLETA 10.0
 #define TEMPO_SIMULACAO 864000
+#define ATRASO_TRANSMISSAO ((9400 * 8) / 1000000000)
 
 // --------------------------------------------------------------------------
 
@@ -222,6 +222,9 @@ int main() {
     inicia_little(&e_w_chegada); 
     inicia_little(&e_w_saida);
 
+    // ! Serão 2 de cada? Um para saída de pessoas 
+    // ! e um para saída de pacotes
+
     // ------------------------------------
 
     // Tempos para a simulação
@@ -241,6 +244,8 @@ int main() {
     unsigned long int fila = 0;
     int max_fila = 0;
 
+    // ! Como vai funcionar a file nesse problema?
+
     // ------------------------------------
 
     // Erros de Little a cada 10 segundos
@@ -248,64 +253,51 @@ int main() {
     // .. adicionar depois o restante das variáveis do cálculo da coleta
 
     // ------------------------------------
+
     MinHeap meuHeap;
     double saida_pacote = DBL_MAX;
+    double chegada_pacote = DBL_MAX;
 
     while (tempo_decorrido < params.tempo_simulacao) {
         
         Conexao conexao_chegada_pacote = meuHeap.mostrarMenorConexao();
+        chegada_pacote = conexao_chegada_pacote.tempo_chegada_pacote;
 
-        // determina o proximo evento
-        tempo_decorrido = min(nova_conexao, min(tempo_coleta, conexao_chegada_pacote.tempo_chegada_pacote));
+        // Determinar o próximo evento
+        tempo_decorrido = min(nova_conexao, min(tempo_coleta, min(chegada_pacote, saida_pacote)));
 
         if (tempo_decorrido == nova_conexao) {
-            // Obs: nos dois primeiros minutos só tem chegada
-            // no fim de 2 min tem que ter uma taxa de x = 7978,7234... ativas
 
             double tempo_duracao = gerar_tempo(params.media_servico);
-            double tempo_conexao_chegada_pacote =  nova_conexao; // nao sabemos se é isso mesmo
+            double tempo_conexao_chegada_pacote = nova_conexao;
             Conexao conexao = {tempo_duracao, tempo_conexao_chegada_pacote};
             meuHeap.adicionarConexao(conexao);
             nova_conexao = tempo_decorrido + gerar_tempo(params.media_chegada);
 
-            // // Cálculo Little -> E[N]
-            // e_n.soma_areas += (tempo_decorrido - e_n.tempo_anterior) * e_n.no_eventos;
-            // e_n.no_eventos++;
-            // e_n.tempo_anterior = tempo_decorrido;
+            // TODO: Calcular os valores de little
 
-            // // Cálculo Little -> E[W] Chegada
-            // e_w_chegada.soma_areas += (tempo_decorrido - e_w_chegada.tempo_anterior) * e_w_chegada.no_eventos;
-            // e_w_chegada.no_eventos++;
-            // e_w_chegada.tempo_anterior = tempo_decorrido;
+            // ! Tratamento Primeiros 2 minutos?
 
-        } else if (tempo_decorrido == conexao_chegada_pacote.tempo_chegada_pacote) {
+        } else if (tempo_decorrido == chegada_pacote) {
 
-            // * Evento: Chegada de um pacote de uma das ligações ativas
-            // ? O que precisa ser feito: 
-
-            // saida do usuario
-            // atualiza metricas
-            // usar arvore min heap para armazenar o minimo na raiz(usar ralocação dinamica)
-            conexao_chegada_pacote.tempo_chegada_pacote += 0.002;
-
-            if (conexao_chegada_pacote.tempo_duracao < conexao_chegada_pacote.tempo_chegada_pacote)
-            {
-                /* code */
+            saida_pacote = chegada_pacote + ATRASO_TRANSMISSAO; 
+            conexao_chegada_pacote.tempo_chegada_pacote += 0.020;
+            meuHeap.removerConexao();
+            if (conexao_chegada_pacote.tempo_duracao > conexao_chegada_pacote.tempo_chegada_pacote) {
+                meuHeap.adicionarConexao(conexao_chegada_pacote);
             }
+
+            // TODO: Calcular os valores de little
+
+        } else if (tempo_decorrido == saida_pacote) {
             
+            // TODO: Calcular os valores de little
 
+            saida_pacote = DBL_MAX;
 
-        } else if (tempo_decorrido == saida_pacote)
-        {
-            /* code */
-        }else if (tempo_decorrido == tempo_coleta) {
+        } else if (tempo_decorrido == tempo_coleta) {
 
-            // * Evento: Coletar o erro de little - coleta a cada 10 segundos
-            // ? O que precisa ser feito: 
-
-            // coleta de dados para calculo de little
-            // atualiza metricas
-            // avança no tempo de coleta para o proximo intervalo
+            // TODO: Calcular os valores de little
 
             tempo_coleta += INTERVALO_COLETA;
 
@@ -336,7 +328,7 @@ int main() {
 
     // --------------------------------------------------------------------------
 
-    // ? Gera o arquivo CSV de resultados e de erros de Little da simulação
+    // TODO: Gera o arquivo CSV de resultados e de erros de Little da simulação
     // .. adicionar depois que o simulador estiver funcionando
 
     // --------------------------------------------------------------------------
