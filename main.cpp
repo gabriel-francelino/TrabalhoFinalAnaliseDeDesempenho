@@ -45,6 +45,8 @@
 #include <math.h>
 #include <float.h>
 #include <time.h>
+#include "min_heap.h"
+
 
 // --------------------------------------------------------------------------
 
@@ -66,14 +68,6 @@ typedef struct {
     double tempo_anterior;
     double soma_areas;
 } little;
-
-// Struct que representa uma conexão
-typedef struct {
-    double tempo_duracao;
-    double tempo_chegada_pacote;
-    // double tempo_passado; 
-    // outras coisas que nao sabemos ainda...
-} conexao;
 
 // Struct com os valores das taxas de chegada para as ocupações
 typedef struct {
@@ -264,6 +258,8 @@ int main() {
     // ------------------------------------
 
     while (tempo_decorrido < params.tempo_simulacao) {
+        MinHeap meuHeap;
+        Conexao conexao;
         
         double chegada_pacote;
         // chegada_pacote = raiz_min_heap.tempo_chegada_pacote

@@ -1,5 +1,5 @@
-run:
-	gcc main.c -lm -o main;
+make:
+	g++ -o main main.cpp;
 	./main;
 
 clean:
