@@ -121,39 +121,31 @@ void define_parametros(parametros *params, int cenario, ocupacoes ocupacoes){
         puts("Cenário 1 (60%):");
         printf("-> Taxa de chegada de pessoas (s): %.4f", ocupacoes.taxa60);
         params->media_chegada = ocupacoes.taxa60;
-
-        printf("\n-> Tempo medio de servico (s): 120");
-        params->media_servico = 120;
         break;
     case 2: // Ocupação 80%
         puts("Cenário 2 (80%):");
         printf("-> Taxa de chegada de pessoas (s): %.4f", ocupacoes.taxa80);
         params->media_chegada = ocupacoes.taxa80;
-
-        printf("\n-> Tempo medio de servico (s): 120");
-        params->media_servico = 120;
         break;
     case 3: // Ocupação 90%
         puts("Cenário 3 (90%):");
         printf("-> Taxa de chegada de pessoas (s): %.4f", ocupacoes.taxa90);
         params->media_chegada = ocupacoes.taxa90;
-
-        printf("\n-> Tempo medio de servico (s): 120");
-        params->media_servico = 120;
         break;
     case 4: // Ocupação 99%
         puts("Cenário 4 (99%):");
         printf("-> Taxa de chegada de pessoas (s): %.4f", ocupacoes.taxa99);
         params->media_chegada = ocupacoes.taxa99;
-
-        printf("\n-> Tempo medio de servico (s): 120");
-        params->media_servico = 120;
         break;
     default:
         printf("Cenário não encontrado.");
         exit(1);
         break;
     }
+
+    printf("\n-> Tempo medio de servico (s): 120");
+    params->media_servico = 120;
+
     puts("\n-> Tempo a ser simulado (s): 864.000");
     params->tempo_simulacao = TEMPO_SIMULACAO;
 }
@@ -256,32 +248,34 @@ int main() {
     // .. adicionar depois o restante das variáveis do cálculo da coleta
 
     // ------------------------------------
+    MinHeap meuHeap;
 
     while (tempo_decorrido < params.tempo_simulacao) {
-        MinHeap meuHeap;
-        Conexao conexao;
         
-        double chegada_pacote;
-        // chegada_pacote = raiz_min_heap.tempo_chegada_pacote
+        double chegada_pacote = meuHeap.estaVazio() ? DBL_MAX : meuHeap.mostrarMenorConexao().tempo_chegada_pacote;
 
         // determina o proximo evento
-        // tempo_decorrido = min(nova_conexao, min(tempo_coleta, chegada_pacote))
+        tempo_decorrido = min(nova_conexao, min(tempo_coleta, chegada_pacote));
 
         if (tempo_decorrido == nova_conexao) {
-
-            // * Evento: Chegada de um Usuario, nova conexão
-            // ? O que precisa ser feito: 
-
-            // atualiza métricas, calculo little, geraçao de tempo...
-
-            // criar conexao
-            //      |_alocar 
-            //      |_gerar tempo duração
-            // gerar tempo da proxima conexao
-
             // Obs: nos dois primeiros minutos só tem chegada
             // no fim de 2 min tem que ter uma taxa de x = 7978,7234... ativas
 
+            double tempo_duracao = gerar_tempo(params.media_servico);
+            double tempo_chegada_pacote =  nova_conexao; // nao sabemos se é isso mesmo
+            Conexao conexao = {tempo_duracao, tempo_chegada_pacote};
+            meuHeap.adicionarConexao(conexao);
+            nova_conexao = tempo_decorrido + gerar_tempo(params.media_chegada);
+
+            // Cálculo Little -> E[N]
+            e_n.soma_areas += (tempo_decorrido - e_n.tempo_anterior) * e_n.no_eventos;
+            e_n.no_eventos++;
+            e_n.tempo_anterior = tempo_decorrido;
+
+            // Cálculo Little -> E[W] Chegada
+            e_w_chegada.soma_areas += (tempo_decorrido - e_w_chegada.tempo_anterior) * e_w_chegada.no_eventos;
+            e_w_chegada.no_eventos++;
+            e_w_chegada.tempo_anterior = tempo_decorrido;
 
         } else if (tempo_decorrido == chegada_pacote) {
 
