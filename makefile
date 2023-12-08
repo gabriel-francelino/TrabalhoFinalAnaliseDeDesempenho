@@ -1,5 +1,5 @@
 make:
-	g++ -o main main.cpp;
+	g++ -o main main.cpp min_heap.cpp;
 	./main;
 
 clean:
