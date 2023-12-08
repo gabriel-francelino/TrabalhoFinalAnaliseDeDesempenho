@@ -302,8 +302,7 @@ int main() {
         if (tempo_decorrido == nova_conexao) {
 
             double tempo_duracao = gerar_tempo((1.0 / params.media_servico));
-            double tempo_conexao_chegada_pacote = nova_conexao;
-            Conexao conexao = {tempo_duracao, tempo_conexao_chegada_pacote};
+            Conexao conexao = {tempo_duracao, nova_conexao};
             meuHeap.adicionarConexao(conexao);
             nova_conexao = tempo_decorrido + gerar_tempo(intervalo_conexao);
 
@@ -322,6 +321,8 @@ int main() {
             if(!fila) {
                 saida_pacote = tempo_decorrido + atraso_transmissao;
                 soma_ocupacao += atraso_transmissao; // ! É isso mesmo?
+                // ! Acho que está entrando menas vezes nos eventos do que deveria
+                printf("soma ocupacao: %lf, tempo_duracao: %lf\n", soma_ocupacao, tempo_decorrido);
             }
             fila++;
             max_fila = max_fila > fila ? max_fila : fila;
