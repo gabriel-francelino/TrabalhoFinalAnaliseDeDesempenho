@@ -16,6 +16,16 @@ struct Conexao {
     }
 };
 
+struct Evento {
+    double tempo_evento;
+    double tempo_duracao;
+    short type; // 0 = Nova Conexão // 1 = Pacote // 2 = Serviço (Saída Pacote) // 3 = Coleta
+
+    bool operator<(const Evento& outra) const {
+        return tempo_evento > outra.tempo_evento;
+    }
+};
+
 class MinHeap {
 private:
     std::priority_queue<Conexao> minHeap;

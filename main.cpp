@@ -51,7 +51,7 @@
 
 #define INTERVALO_COLETA 10.0
 #define TEMPO_SIMULACAO 864000
-#define ATRASO_TRANSMISSAO ((9400 * 8) / 1000000000)
+#define ATRASO_TRANSMISSAO ((188 * 8) / 1000000000)
 
 // --------------------------------------------------------------------------
 
@@ -222,9 +222,6 @@ int main() {
     inicia_little(&e_w_chegada); 
     inicia_little(&e_w_saida);
 
-    // ! Serão 2 de cada? Um para saída de pessoas 
-    // ! e um para saída de pacotes
-
     // ------------------------------------
 
     // Tempos para a simulação
@@ -233,9 +230,6 @@ int main() {
     double tempo_decorrido = 0.0;
     double nova_conexao = gerar_tempo(intervalo_conexao);
 
-    // double tempo_chegada = gerar_tempo(params.media_chegada);
-    // double tempo_saida = DBL_MAX;
-
     // ------------------------------------
     
     // Variáveis de interesse para a simulação
@@ -243,8 +237,6 @@ int main() {
     double soma_ocupacao = 0.0;
     unsigned long int fila = 0;
     int max_fila = 0;
-
-    // ! Como vai funcionar a file nesse problema?
 
     // ------------------------------------
 
@@ -264,13 +256,17 @@ int main() {
         chegada_pacote = conexao_chegada_pacote.tempo_chegada_pacote;
 
         // Determinar o próximo evento
-        tempo_decorrido = min(nova_conexao, min(tempo_coleta, min(chegada_pacote, saida_pacote)));
+        // tempo_decorrido = min(nova_conexao, min(tempo_coleta, min(chegada_pacote, saida_pacote)));
+        Evento ev = meuHeap.removerConexao();
+        tempo_decorrido = ev.tempo_evento;
 
+        // if (ev.type == 0) {
         if (tempo_decorrido == nova_conexao) {
 
             double tempo_duracao = gerar_tempo(params.media_servico);
             double tempo_conexao_chegada_pacote = nova_conexao;
             Conexao conexao = {tempo_duracao, tempo_conexao_chegada_pacote};
+            // Evento evento = {tempo_duracao, tempo_conexao_chegada_pacote, 0};
             meuHeap.adicionarConexao(conexao);
             nova_conexao = tempo_decorrido + gerar_tempo(params.media_chegada);
 
@@ -280,20 +276,31 @@ int main() {
 
         } else if (tempo_decorrido == chegada_pacote) {
 
-            saida_pacote = chegada_pacote + ATRASO_TRANSMISSAO; 
+            // saida_pacote = chegada_pacote + ATRASO_TRANSMISSAO; 
             conexao_chegada_pacote.tempo_chegada_pacote += 0.020;
             meuHeap.removerConexao();
             if (conexao_chegada_pacote.tempo_duracao > conexao_chegada_pacote.tempo_chegada_pacote) {
                 meuHeap.adicionarConexao(conexao_chegada_pacote);
             }
 
+            if(!fila) {
+                saida_pacote = tempo_decorrido + ATRASO_TRANSMISSAO; 
+            }
+            fila++;
+            max_fila++;
+
             // TODO: Calcular os valores de little
 
         } else if (tempo_decorrido == saida_pacote) {
-            
-            // TODO: Calcular os valores de little
 
-            saida_pacote = DBL_MAX;
+            fila--;
+            if(fila) {
+                saida_pacote = tempo_decorrido + ATRASO_TRANSMISSAO;
+            } else {
+                saida_pacote = DBL_MAX;
+            }
+
+            // TODO: Calcular os valores de little
 
         } else if (tempo_decorrido == tempo_coleta) {
 
