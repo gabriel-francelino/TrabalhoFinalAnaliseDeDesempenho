@@ -301,14 +301,15 @@ int main() {
 
         if (tempo_decorrido == nova_conexao) {
 
-            double tempo_duracao = gerar_tempo(params.media_servico);
+            double tempo_duracao = gerar_tempo((1.0 / params.media_servico));
             double tempo_conexao_chegada_pacote = nova_conexao;
             Conexao conexao = {tempo_duracao, tempo_conexao_chegada_pacote};
             meuHeap.adicionarConexao(conexao);
-            nova_conexao = tempo_decorrido + gerar_tempo(params.media_chegada);
+            nova_conexao = tempo_decorrido + gerar_tempo(intervalo_conexao);
 
             // TODO: Calcular os valores de little
             // ! O que colocar aqui?
+            // ? Talvez igual as atualizações do tempo_coleta
 
         } else if (tempo_decorrido == chegada_pacote) {
 
