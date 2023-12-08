@@ -45,13 +45,16 @@
 #include <math.h>
 #include <float.h>
 #include <time.h>
+#include <iostream>
+#include <cstdio>
 #include "min_heap.h"
+
+using namespace std;
 
 // --------------------------------------------------------------------------
 
 #define INTERVALO_COLETA 10.0
 #define TEMPO_SIMULACAO 864000
-#define ATRASO_TRANSMISSAO ((9400 * 8) / 1000000000)
 
 // --------------------------------------------------------------------------
 
@@ -182,9 +185,40 @@ double min(double d1, double d2) {
 
 // --------------------------------------------------------------------------
 
-// ? Funções para escrever os resultados em arquivos CSV
+// Funções para escrever os resultados em arquivos CSV
 
-// ... adicionar depois 
+// void resultado_csv(int cenario, double ocupacao_simulada, double e_n, double e_w) {
+//     // Cria um arquivo para os resultados
+//     char nome_arquivo[20];
+//     sprintf(nome_arquivo, "res/results_%d.csv", cenario);
+//     FILE *arquivo = std::fopen(nome_arquivo, "w");
+//     if (arquivo == nullptr) {
+//         perror("Erro ao gerar o arquivo");
+//         exit(1);
+//     }
+//     // Escreve as medidas de validação no arquivo    
+//     fprintf(arquivo, "Cenario,Ocupação Simulada,E[N],E[W]\n");
+//     fprintf(arquivo, "%d, %.6lf, %.6lf, %.6lf, %.6lf\n", cenario, ocupacao_simulada, e_n, e_w);
+//     fclose(arquivo);
+// }
+
+// void erro_csv(int cenario, int n_erros, double erros_little[]) {
+//     // Cria um arquivo para os erros do cenário
+//     char nome_arquivo[20];
+//     sprintf(nome_arquivo, "res/erros_%d.csv", cenario);
+//     FILE *arquivo = fopen(nome_arquivo, "w");
+//     if (arquivo == nullptr) {
+//         perror("Erro ao gerar o arquivo");
+//         exit(1);
+//     }
+//     // Escreve o cabeçalho para o vetor de erros de Little    
+//     fprintf(arquivo, "Tempo,Erro Little\n");
+//     // Escreve os valores do vetor de erros de Little    
+//     for (int i = 0; i < n_erros; i++) {
+//         fprintf(arquivo, "%.2lf, %.20lf\n", (i+1) * 10.0, erros_little[i]);
+//     }
+//     fclose(arquivo);
+// }
 
 // --------------------------------------------------------------------------
 
@@ -224,9 +258,24 @@ int main() {
 
     // Tempos para a simulação
 
-    double intervalo_conexao = 1.0 / params.media_chegada;
     double tempo_decorrido = 0.0;
+
+    double intervalo_conexao = 1.0 / params.media_chegada;
     double nova_conexao = gerar_tempo(intervalo_conexao);
+
+    double saida_pacote = DBL_MAX;
+    double chegada_pacote = DBL_MAX;
+
+    const double atraso_transmissao = ((188.0 * 8.0) / 1000000000.0);
+
+    // ------------------------------------
+
+    // Variáveis para coleta a cada 10s
+
+    double tempo_coleta = INTERVALO_COLETA;
+    int indice_erro = 0;
+    int n_erros = (int)(params.tempo_simulacao / INTERVALO_COLETA);
+    double erros_little[n_erros];
 
     // ------------------------------------
     
@@ -238,15 +287,9 @@ int main() {
 
     // ------------------------------------
 
-    // Erros de Little a cada 10 segundos
-    double tempo_coleta = INTERVALO_COLETA;
-    // .. adicionar depois o restante das variáveis do cálculo da coleta
-
-    // ------------------------------------
+    // Árvore Min Heap 
 
     MinHeap meuHeap;
-    double saida_pacote = DBL_MAX;
-    double chegada_pacote = DBL_MAX;
 
     while (tempo_decorrido < params.tempo_simulacao) {
         
@@ -265,6 +308,7 @@ int main() {
             nova_conexao = tempo_decorrido + gerar_tempo(params.media_chegada);
 
             // TODO: Calcular os valores de little
+            // ! O que colocar aqui?
 
         } else if (tempo_decorrido == chegada_pacote) {
 
@@ -275,27 +319,69 @@ int main() {
             }
 
             if(!fila) {
-                saida_pacote = tempo_decorrido + ATRASO_TRANSMISSAO;
+                saida_pacote = tempo_decorrido + atraso_transmissao;
+                soma_ocupacao += atraso_transmissao; // ! É isso mesmo?
             }
             fila++;
-            max_fila++;
+            max_fila = max_fila > fila ? max_fila : fila;
 
-            // TODO: Calcular os valores de little
+            // ? Cálculo de Little
+            // ! = tempo_cheagada do trabalho 1?
+
+            // Cálculo Little -> E[N]
+            e_n.soma_areas += (tempo_decorrido - e_n.tempo_anterior) * e_n.no_eventos;
+            e_n.no_eventos++;
+            e_n.tempo_anterior = tempo_decorrido;
+
+            // Cálculo Little -> E[W] Chegada
+            e_w_chegada.soma_areas += (tempo_decorrido - e_w_chegada.tempo_anterior) * e_w_chegada.no_eventos;
+            e_w_chegada.no_eventos++;
+            e_w_chegada.tempo_anterior = tempo_decorrido;
 
         } else if (tempo_decorrido == saida_pacote) {
             
             fila--;
             if(fila) {
-                saida_pacote = tempo_decorrido + ATRASO_TRANSMISSAO;
+                saida_pacote = tempo_decorrido + atraso_transmissao;
+                soma_ocupacao += atraso_transmissao; // ! Isso mesmo?
             } else  {
                 saida_pacote = DBL_MAX;
             }
 
-            // TODO: Calcular os valores de little
+            // ? Cálculo de Little
+            // ! = tempo_saida do trabalho 1?
+            
+            // Cálculo Little -> E[N]
+            e_n.soma_areas += (tempo_decorrido - e_n.tempo_anterior) * e_n.no_eventos;
+            e_n.no_eventos--;
+            e_n.tempo_anterior = tempo_decorrido;
+
+            // Cálculo Little -> E[W] Saída
+            e_w_saida.soma_areas += (tempo_decorrido - e_w_saida.tempo_anterior) * e_w_saida.no_eventos;
+            e_w_saida.no_eventos++;
+            e_w_saida.tempo_anterior = tempo_decorrido;
 
         } else if (tempo_decorrido == tempo_coleta) {
 
-            // TODO: Calcular os valores de little
+            // ? Cálculo de Little
+            // ! = tempo_coleta do trabalho 1?
+
+            e_n.soma_areas += (tempo_decorrido - e_n.tempo_anterior) * e_n.no_eventos;
+            e_w_chegada.soma_areas += (tempo_decorrido - e_w_chegada.tempo_anterior) * e_w_chegada.no_eventos;
+            e_w_saida.soma_areas += (tempo_decorrido - e_w_saida.tempo_anterior) * e_w_saida.no_eventos;
+            e_n.tempo_anterior = tempo_decorrido;
+            e_w_chegada.tempo_anterior = tempo_decorrido;
+            e_w_saida.tempo_anterior = tempo_decorrido;
+
+            double e_n_calculo = e_n.soma_areas / tempo_decorrido;
+            double e_w_calculo = (e_w_chegada.soma_areas - e_w_saida.soma_areas) / e_w_chegada.no_eventos;
+            double lambda = e_w_chegada.no_eventos / tempo_decorrido;
+            double erro_little = e_n_calculo - (lambda * e_w_calculo);
+            if(erro_little < 0) {
+                erro_little = (-1.0)*erro_little;
+            }           
+            erros_little[indice_erro] = erro_little;
+            indice_erro++;
 
             tempo_coleta += INTERVALO_COLETA;
 
@@ -307,8 +393,8 @@ int main() {
 
     // --------------------------------------------------------------------------
 
-    // e_w_chegada.soma_areas += (tempo_decorrido - e_w_chegada.tempo_anterior) * e_w_chegada.no_eventos;
-    // e_w_saida.soma_areas += (tempo_decorrido - e_w_saida.tempo_anterior) * e_w_saida.no_eventos;
+    e_w_chegada.soma_areas += (tempo_decorrido - e_w_chegada.tempo_anterior) * e_w_chegada.no_eventos;
+    e_w_saida.soma_areas += (tempo_decorrido - e_w_saida.tempo_anterior) * e_w_saida.no_eventos;
 
     // --------------------------------------------------------------------------
 
@@ -322,12 +408,15 @@ int main() {
     double lambda = e_w_chegada.no_eventos / tempo_decorrido;
     printf("-> E[N] = %lF\n", e_n_calculo);
     printf("-> E[W] = %lF\n", e_w_calculo);
-    printf("-> Erro de Little Final: %.20lF\n\n", e_n_calculo - (lambda * e_w_calculo));
+    double erro_little_final =  e_n_calculo - (lambda * e_w_calculo);
+    erro_little_final = erro_little_final < 0 ? (-1)*erro_little_final : erro_little_final;
+    printf("-> Erro de Little Final: %.20lF\n\n", erro_little_final);
 
     // --------------------------------------------------------------------------
 
-    // TODO: Gera o arquivo CSV de resultados e de erros de Little da simulação
-    // .. adicionar depois que o simulador estiver funcionando
+    // Gera o arquivo CSV de resultados e de erros de Little da simulação
+    // resultado_csv(cenario, ocupacao, e_n_calculo, e_w_calculo);
+    // erro_csv(cenario, n_erros, erros_little);
 
     // --------------------------------------------------------------------------
 
