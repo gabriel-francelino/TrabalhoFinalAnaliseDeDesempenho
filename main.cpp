@@ -54,7 +54,7 @@ using namespace std;
 // --------------------------------------------------------------------------
 
 #define INTERVALO_COLETA 10.0
-#define TEMPO_SIMULACAO 500
+#define TEMPO_SIMULACAO 100
 
 // --------------------------------------------------------------------------
 
@@ -97,19 +97,12 @@ double calcular_taxa(double ocupacao) {
 void definir_ocupacoes(ocupacoes *ocupacoes) {
     // Para 60% de ocupação, 600Mbps em 1Gbps
     ocupacoes->taxa60 = calcular_taxa(0.6);
-    //printf("Taxa de Chegada para 0.60: %.20f pessoas por segundo\n", ocupacoes->taxa60);
-
     // Para 80% de ocupação, 800Mbps em 1Gbps
     ocupacoes->taxa80 = calcular_taxa(0.8);
-    //printf("Taxa de Chegada para 0.80: %.20f pessoas por segundo\n", ocupacoes->taxa80);
-
     // Para 90% de ocupação, 900Mbps em 1Gbps
     ocupacoes->taxa90 = calcular_taxa(0.9);
-    //printf("Taxa de Chegada para 0.90: %.20f pessoas por segundo\n", ocupacoes->taxa90);
-
     // Para 99% de ocupação, 999Mbps em 1Gbps
     ocupacoes->taxa99 = calcular_taxa(0.99);
-    //printf("Taxa de Chegada para 0.99: %.20f pessoas por segundo\n", ocupacoes->taxa99);
 }
 
 // ------------------------------------------------------------------------------------------------------------------------------
@@ -147,7 +140,7 @@ void define_parametros(parametros *params, int cenario, ocupacoes ocupacoes){
     printf("\n-> Tempo medio de servico (s): 120");
     params->media_servico = 120;
 
-    puts("\n-> Tempo a ser simulado (s): 864.000");
+    printf("\n-> Tempo a ser simulado (s): %d\n", TEMPO_SIMULACAO);
     params->tempo_simulacao = TEMPO_SIMULACAO;
 }
 
@@ -305,10 +298,6 @@ int main() {
             meuHeap.adicionarConexao(conexao);
             nova_conexao = tempo_decorrido + gerar_tempo((1.0 / intervalo_conexao));
 
-            // TODO: Calcular os valores de little
-            // ! O que colocar aqui?
-            // ? Talvez igual as atualizações do tempo_coleta
-
         } else if (tempo_decorrido == chegada_pacote) {
 
             conexao_chegada_pacote.tempo_chegada_pacote += 0.020;
@@ -326,9 +315,6 @@ int main() {
             fila++;
             max_fila = max_fila > fila ? max_fila : fila;
 
-            // ? Cálculo de Little
-            // ! = tempo_cheagada do trabalho 1?
-
             // Cálculo Little -> E[N]
             e_n.soma_areas += (tempo_decorrido - e_n.tempo_anterior) * e_n.no_eventos;
             e_n.no_eventos++;
@@ -344,13 +330,10 @@ int main() {
             fila--;
             if(fila) {
                 saida_pacote = tempo_decorrido + atraso_transmissao;
-                soma_ocupacao += atraso_transmissao; // ! Isso mesmo?
+                soma_ocupacao += atraso_transmissao;
             } else  {
                 saida_pacote = DBL_MAX;
             }
-
-            // ? Cálculo de Little
-            // ! = tempo_saida do trabalho 1?
             
             // Cálculo Little -> E[N]
             e_n.soma_areas += (tempo_decorrido - e_n.tempo_anterior) * e_n.no_eventos;
@@ -363,9 +346,6 @@ int main() {
             e_w_saida.tempo_anterior = tempo_decorrido;
 
         } else if (tempo_decorrido == tempo_coleta) {
-
-            // ? Cálculo de Little
-            // ! = tempo_coleta do trabalho 1?
 
             e_n.soma_areas += (tempo_decorrido - e_n.tempo_anterior) * e_n.no_eventos;
             e_w_chegada.soma_areas += (tempo_decorrido - e_w_chegada.tempo_anterior) * e_w_chegada.no_eventos;
