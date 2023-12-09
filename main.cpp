@@ -54,7 +54,7 @@ using namespace std;
 // --------------------------------------------------------------------------
 
 #define INTERVALO_COLETA 10.0
-#define TEMPO_SIMULACAO 100
+#define TEMPO_SIMULACAO 864000
 
 // --------------------------------------------------------------------------
 
@@ -180,38 +180,38 @@ double min(double d1, double d2) {
 
 // Funções para escrever os resultados em arquivos CSV
 
-// void resultado_csv(int cenario, double ocupacao_simulada, double e_n, double e_w) {
-//     // Cria um arquivo para os resultados
-//     char nome_arquivo[20];
-//     sprintf(nome_arquivo, "res/results_%d.csv", cenario);
-//     FILE *arquivo = std::fopen(nome_arquivo, "w");
-//     if (arquivo == nullptr) {
-//         perror("Erro ao gerar o arquivo");
-//         exit(1);
-//     }
-//     // Escreve as medidas de validação no arquivo    
-//     fprintf(arquivo, "Cenario,Ocupação Simulada,E[N],E[W]\n");
-//     fprintf(arquivo, "%d, %.6lf, %.6lf, %.6lf, %.6lf\n", cenario, ocupacao_simulada, e_n, e_w);
-//     fclose(arquivo);
-// }
+void resultado_csv(int cenario, double ocupacao_simulada, double e_n, double e_w, int max_fila) {
+    // Cria um arquivo para os resultados
+    char nome_arquivo[20];
+    sprintf(nome_arquivo, "res/results_%d.csv", cenario);
+    FILE *arquivo = std::fopen(nome_arquivo, "w");
+    if (arquivo == nullptr) {
+        perror("Erro ao gerar o arquivo");
+        exit(1);
+    }
+    // Escreve as medidas de validação no arquivo    
+    fprintf(arquivo, "Cenario,Ocupação Simulada,E[N],E[W],Fila Máxima\n");
+    fprintf(arquivo, "%d, %.6lf, %.6lf, %.6lf, %d\n", cenario, ocupacao_simulada, e_n, e_w, max_fila);
+    fclose(arquivo);
+}
 
-// void erro_csv(int cenario, int n_erros, double erros_little[]) {
-//     // Cria um arquivo para os erros do cenário
-//     char nome_arquivo[20];
-//     sprintf(nome_arquivo, "res/erros_%d.csv", cenario);
-//     FILE *arquivo = fopen(nome_arquivo, "w");
-//     if (arquivo == nullptr) {
-//         perror("Erro ao gerar o arquivo");
-//         exit(1);
-//     }
-//     // Escreve o cabeçalho para o vetor de erros de Little    
-//     fprintf(arquivo, "Tempo,Erro Little\n");
-//     // Escreve os valores do vetor de erros de Little    
-//     for (int i = 0; i < n_erros; i++) {
-//         fprintf(arquivo, "%.2lf, %.20lf\n", (i+1) * 10.0, erros_little[i]);
-//     }
-//     fclose(arquivo);
-// }
+void erro_csv(int cenario, int n_erros, double erros_little[]) {
+    // Cria um arquivo para os erros do cenário
+    char nome_arquivo[20];
+    sprintf(nome_arquivo, "res/erros_%d.csv", cenario);
+    FILE *arquivo = fopen(nome_arquivo, "w");
+    if (arquivo == nullptr) {
+        perror("Erro ao gerar o arquivo");
+        exit(1);
+    }
+    // Escreve o cabeçalho para o vetor de erros de Little    
+    fprintf(arquivo, "Tempo,Erro Little\n");
+    // Escreve os valores do vetor de erros de Little    
+    for (int i = 0; i < n_erros; i++) {
+        fprintf(arquivo, "%.2lf, %.20lf\n", (i+1) * 10.0, erros_little[i]);
+    }
+    fclose(arquivo);
+}
 
 // --------------------------------------------------------------------------
 
@@ -396,8 +396,8 @@ int main() {
     // --------------------------------------------------------------------------
 
     // Gera o arquivo CSV de resultados e de erros de Little da simulação
-    // resultado_csv(cenario, ocupacao, e_n_calculo, e_w_calculo);
-    // erro_csv(cenario, n_erros, erros_little);
+    resultado_csv(cenario, ocupacao, e_n_calculo, e_w_calculo, max_fila);
+    erro_csv(cenario, n_erros, erros_little);
 
     // --------------------------------------------------------------------------
 
