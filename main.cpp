@@ -54,7 +54,7 @@ using namespace std;
 // --------------------------------------------------------------------------
 
 #define INTERVALO_COLETA 10.0
-#define TEMPO_SIMULACAO 864000
+#define TEMPO_SIMULACAO 500
 
 // --------------------------------------------------------------------------
 
@@ -261,7 +261,7 @@ int main() {
     double tempo_decorrido = 0.0;
 
     double intervalo_conexao = 1.0 / params.media_chegada;
-    double nova_conexao = gerar_tempo(intervalo_conexao);
+    double nova_conexao = gerar_tempo(1.0 / intervalo_conexao);
 
     double saida_pacote = DBL_MAX;
     double chegada_pacote = DBL_MAX;
@@ -300,11 +300,10 @@ int main() {
         tempo_decorrido = min(nova_conexao, min(tempo_coleta, min(chegada_pacote, saida_pacote)));
 
         if (tempo_decorrido == nova_conexao) {
-
-            double tempo_duracao = gerar_tempo((1.0 / params.media_servico));
+            double tempo_duracao = tempo_decorrido + gerar_tempo((1.0 / params.media_servico));
             Conexao conexao = {tempo_duracao, nova_conexao};
             meuHeap.adicionarConexao(conexao);
-            nova_conexao = tempo_decorrido + gerar_tempo(intervalo_conexao);
+            nova_conexao = tempo_decorrido + gerar_tempo((1.0 / intervalo_conexao));
 
             // TODO: Calcular os valores de little
             // ! O que colocar aqui?
@@ -322,7 +321,7 @@ int main() {
                 saida_pacote = tempo_decorrido + atraso_transmissao;
                 soma_ocupacao += atraso_transmissao; // ! É isso mesmo?
                 // ! Acho que está entrando menas vezes nos eventos do que deveria
-                printf("soma ocupacao: %lf, tempo_duracao: %lf\n", soma_ocupacao, tempo_decorrido);
+                // printf("soma ocupacao: %lf, tempo_duracao: %lf\n", soma_ocupacao, tempo_decorrido);
             }
             fila++;
             max_fila = max_fila > fila ? max_fila : fila;
