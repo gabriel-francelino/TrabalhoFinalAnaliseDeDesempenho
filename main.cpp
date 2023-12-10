@@ -56,7 +56,7 @@ using namespace std;
 // --------------------------------------------------------------------------
 
 #define INTERVALO_COLETA 10.0
-#define TEMPO_SIMULACAO 1000
+#define TEMPO_SIMULACAO 864000
 // --------------------------------------------------------------------------
 
 // Struct com os parâmetros da simulação
