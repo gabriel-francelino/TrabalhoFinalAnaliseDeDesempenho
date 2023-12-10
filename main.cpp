@@ -47,7 +47,6 @@
 #include <time.h>
 #include <iostream>
 #include <cstdio>
-// #include "min_heap.h"
 #include "fila.h"
 #include <chrono>
 
@@ -56,7 +55,8 @@ using namespace std;
 // --------------------------------------------------------------------------
 
 #define INTERVALO_COLETA 10.0
-#define TEMPO_SIMULACAO 864000
+#define TEMPO_SIMULACAO 2000
+
 // --------------------------------------------------------------------------
 
 // Struct com os parâmetros da simulação
@@ -205,7 +205,7 @@ void resultado_csv(int cenario, double ocupacao_simulada, double e_n, double e_w
     }
     // Escreve as medidas de validação no arquivo
     fprintf(arquivo, "Cenario,Ocupação Simulada,E[N],E[W],Fila Máxima\n");
-    fprintf(arquivo, "%d, %.6lf, %.6lf, %.6lf, %d\n", cenario, ocupacao_simulada, e_n, e_w, max_fila);
+    fprintf(arquivo, "%d, %.20lf, %.20lf, %.20lf, %d\n", cenario, ocupacao_simulada, e_n, e_w, max_fila);
     fclose(arquivo);
 }
 
@@ -232,9 +232,37 @@ void erro_csv(int cenario, int n_erros, double erros_little[])
 
 // --------------------------------------------------------------------------
 
+// Função para acompanhar o andamento da execução
+
+void registrar_andamento(double tempoDecorrido) 
+{
+    FILE *arquivo;
+    arquivo = fopen("tempo.txt", "a");
+    if (arquivo != NULL) {
+        fprintf(arquivo, "Tempo decorrido: %f\n", tempoDecorrido);
+        fclose(arquivo);
+    }
+}
+void limparArquivo() 
+{
+    FILE *arquivo;
+    arquivo = fopen("tempo.txt", "w");
+    if (arquivo != NULL) {
+        fclose(arquivo);
+    }
+}
+
+// --------------------------------------------------------------------------
+
 int main()
 {
     auto start = chrono::high_resolution_clock::now();
+
+    // ------------------------------------
+
+    limparArquivo();
+
+    // ------------------------------------
 
     int seed = time(NULL);
     srand(seed);
@@ -300,9 +328,8 @@ int main()
 
     // ------------------------------------
 
-    // Árvore Min Heap
+    // Fila de Conexões
 
-    // MinHeap meuHeap;
     MinhaFila minhaFila;
 
     while (tempo_decorrido < params.tempo_simulacao)
@@ -395,6 +422,8 @@ int main()
             indice_erro++;
 
             tempo_coleta += INTERVALO_COLETA;
+
+            registrar_andamento(tempo_decorrido);
         }
         else
         {
@@ -414,12 +443,12 @@ int main()
     puts("\n---- Validação da Simulação ----");
     printf("-> Tamanho Máximo da Fila: %d\n", max_fila);
     double ocupacao = soma_ocupacao / tempo_decorrido;
-    printf("-> Ocupação Simulada: %lF\n", ocupacao);
+    printf("-> Ocupação Simulada: %.20lF\n", ocupacao);
     double e_n_calculo = e_n.soma_areas / tempo_decorrido;
     double e_w_calculo = (e_w_chegada.soma_areas - e_w_saida.soma_areas) / e_w_chegada.no_eventos;
     double lambda = e_w_chegada.no_eventos / tempo_decorrido;
-    printf("-> E[N] = %lF\n", e_n_calculo);
-    printf("-> E[W] = %lF\n", e_w_calculo);
+    printf("-> E[N] = %.20lF\n", e_n_calculo);
+    printf("-> E[W] = %.20lF\n", e_w_calculo);
     double erro_little_final = e_n_calculo - (lambda * e_w_calculo);
     erro_little_final = erro_little_final < 0 ? (-1) * erro_little_final : erro_little_final;
     printf("-> Erro de Little Final: %.20lF\n\n", erro_little_final);
@@ -431,6 +460,7 @@ int main()
     erro_csv(cenario, n_erros, erros_little);
 
     // --------------------------------------------------------------------------
+
     auto end = chrono::high_resolution_clock::now();
     chrono::duration<double> duration = end - start;
     cout << endl << "-> Tempo de execucao: " << duration.count() << " segundos" << endl;
