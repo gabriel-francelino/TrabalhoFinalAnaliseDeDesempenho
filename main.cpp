@@ -47,15 +47,16 @@
 #include <time.h>
 #include <iostream>
 #include <cstdio>
-#include "min_heap.h"
+// #include "min_heap.h"
+#include "fila.h"
+#include <chrono>
 
 using namespace std;
 
 // --------------------------------------------------------------------------
 
 #define INTERVALO_COLETA 10.0
-#define TEMPO_SIMULACAO 864000
-
+#define TEMPO_SIMULACAO 1000
 // --------------------------------------------------------------------------
 
 // Struct com os parâmetros da simulação
@@ -164,7 +165,6 @@ void inicia_little(little *l)
 // --------------------------------------------------------------------------
 
 // Funções para o cálculo do tempo exponencial
-
 double uniforme()
 {
     double u = rand() / ((double)RAND_MAX + 1);
@@ -172,6 +172,8 @@ double uniforme()
     return u;
 }
 
+
+// Função para gerar tempo baseado na função exponencial
 double gerar_tempo(double media)
 {
     return (-1.0 / media) * log(uniforme());
@@ -180,7 +182,6 @@ double gerar_tempo(double media)
 // --------------------------------------------------------------------------
 
 // Funções Auxiliares
-
 double min(double d1, double d2)
 {
     if (d1 < d2)
@@ -191,7 +192,6 @@ double min(double d1, double d2)
 // --------------------------------------------------------------------------
 
 // Funções para escrever os resultados em arquivos CSV
-
 void resultado_csv(int cenario, double ocupacao_simulada, double e_n, double e_w, int max_fila)
 {
     // Cria um arquivo para os resultados
@@ -234,6 +234,8 @@ void erro_csv(int cenario, int n_erros, double erros_little[])
 
 int main()
 {
+    auto start = chrono::high_resolution_clock::now();
+
     int seed = time(NULL);
     srand(seed);
     printf("\nSeed: %d\n", seed);
@@ -300,12 +302,13 @@ int main()
 
     // Árvore Min Heap
 
-    MinHeap meuHeap;
+    // MinHeap meuHeap;
+    MinhaFila minhaFila;
 
     while (tempo_decorrido < params.tempo_simulacao)
     {
 
-        Conexao conexao_chegada_pacote = meuHeap.mostrarMenorConexao();
+        Conexao conexao_chegada_pacote = minhaFila.top();
         chegada_pacote = conexao_chegada_pacote.tempo_chegada_pacote;
 
         // Determinar o próximo evento
@@ -314,18 +317,18 @@ int main()
         if (tempo_decorrido == nova_conexao)
         {
             double tempo_duracao = tempo_decorrido + gerar_tempo((1.0 / params.media_servico));
-            Conexao conexao = {tempo_duracao, nova_conexao};
-            meuHeap.adicionarConexao(conexao);
+            Conexao conexao = {tempo_duracao, nova_conexao+0.02};
+            minhaFila.push(conexao);
             nova_conexao = tempo_decorrido + gerar_tempo((1.0 / intervalo_conexao));
         }
         else if (tempo_decorrido == chegada_pacote)
         {
 
             conexao_chegada_pacote.tempo_chegada_pacote += 0.020;
-            meuHeap.removerConexao();
-            if (conexao_chegada_pacote.tempo_duracao > conexao_chegada_pacote.tempo_chegada_pacote)
+            minhaFila.pop();
+            if (conexao_chegada_pacote.tempo_duracao >= conexao_chegada_pacote.tempo_chegada_pacote)
             {
-                meuHeap.adicionarConexao(conexao_chegada_pacote);
+                minhaFila.push(conexao_chegada_pacote);
             }
 
             if (!fila)
@@ -428,6 +431,9 @@ int main()
     erro_csv(cenario, n_erros, erros_little);
 
     // --------------------------------------------------------------------------
+    auto end = chrono::high_resolution_clock::now();
+    chrono::duration<double> duration = end - start;
+    cout << endl << "-> Tempo de execucao: " << duration.count() << " segundos" << endl;
 
     return 0;
 }
