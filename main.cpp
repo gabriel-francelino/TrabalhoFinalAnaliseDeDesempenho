@@ -1,44 +1,10 @@
-/*
-    Proposta do Trabalho:
-        * -- Trabalho 2 --
-
-        ! Rede de um Trabalho Remoto
-        (Várias chamadas dos funcionários)
-        Cada chamada dura em média 2 minutos -> Exponencial
-        Enquanto a chamada está ativa, gera pacotes em transmissão
-        em tempo real (CBR Contant Bit Rate = a cada 20ms)
-        O tempo médio entre os pacotes depende do CODEC (de audio e vídeo da aplicação)
-            G711u/a - 50 pacotes por segundo (64Kbps - 160 bytes por pacote)
-            160 bytes + 8 bytes (UDP) + 20 bytes (IP) = 188 bytes
-        Link de 16bps
-        O intervalo entre ligações também é exponencial.
-
-        Quantas pessoas são necessárias no link ao mesmo tempo para obter
-        ocupação de (60%, 80%, 90% e 99%)
-
-        ? Depois disso, calcular os mesmos valores do último simulador:
-
-        Ocupação, máximo de fila, E[N], E[W] e Erro de Little.
-        Tempo de Simulação = 864.000 = 10 dias
-        4 cenários -
-            Ocupação Aprox 60%;
-            Ocupação Aprox 80%;
-            Ocupação Aprox 90%;
-            Ocupação Aprox 99%;
-        Para cada cenário:
-            Qual o intervalo entre chegadas?
-            Qual o intervalo entre serviços?
-
-        Gerar um gráfico com as medidas de validação da simulação. (Gráficos Gerais)
-            Ocupação Simulada x Ocupação Calculada
-            E[N] x Ocupação Calculada
-            E[W] x Ocupação Calculada
-
-        Gráficos de Erro de Little
-            Erro Little |E[N]-E[W]*Lambda| Aprox 0
-            Medir erro a cada 10 segundos exatos.
-            Um gráfico para cada cenário -> Erro x Tempo
-*/
+/*===================================================================
+* UNIFAL = Universidade Federal de Alfenas.
+* BACHARELADO EM CIENCIA DA COMPUTACAO.
+* Trabalho..: Simulador Discreto / Trabalho 2
+* Disciplina: Análise de Desempenho
+* Alunos....: Gabriel Francelino Nascimento e Gabriel Piva Pereira
+*===================================================================*/
 
 #include <stdio.h>
 #include <stdlib.h>
