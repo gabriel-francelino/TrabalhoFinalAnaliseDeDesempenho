@@ -11,4 +11,4 @@ texto:
 	./main > saida.txt;
 
 clean:
-	rm main saida.txt;
+	rm main saida.txt tempo.txt;
